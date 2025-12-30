@@ -8,40 +8,65 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.iofamily.garatrac.ui.settings.SettingsScreen
+import com.iofamily.garatrac.ui.settings.SettingsViewModel
+import com.iofamily.garatrac.data.PoiRepository
+import com.iofamily.garatrac.ui.map.OsmMapView
 import com.iofamily.garatrac.ui.theme.GaraTracTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             GaraTracTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
+                val navController = rememberNavController()
+                val settingsViewModel: SettingsViewModel = viewModel()
+                val settings by settingsViewModel.mapSettings.collectAsState()
+
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    topBar = {
+                        TopAppBar(
+                            title = { Text("GaraTrac") },
+                            actions = {
+                                IconButton(onClick = { navController.navigate("settings") }) {
+                                    Text("Settings")
+                                }
+                            }
+                        )
+                    }
+                ) { innerPadding ->
+                    NavHost(
+                        navController = navController,
+                        startDestination = "map",
                         modifier = Modifier.padding(innerPadding)
-                    )
+                    ) {
+                        composable("map") {
+                            OsmMapView(
+                                modifier = Modifier.fillMaxSize(),
+                                pois = PoiRepository.getPois(),
+                                mapType = settings.mapType
+                            )
+                        }
+                        composable("settings") {
+                            SettingsScreen(viewModel = settingsViewModel)
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    GaraTracTheme {
-        Greeting("Android")
-    }
-}
