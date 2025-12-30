@@ -19,5 +19,21 @@ class LocationRepository {
             emptyList()
         }
     }
-}
 
+    suspend fun postLocation(serverUrl: String, update: LocationUpdate): Boolean {
+        val validUrl = if (serverUrl.endsWith("/")) serverUrl else "$serverUrl/"
+        return try {
+            val retrofit = Retrofit.Builder()
+                .baseUrl(validUrl)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+            val api = retrofit.create(TrackerApi::class.java)
+            api.postLocation(update)
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+}

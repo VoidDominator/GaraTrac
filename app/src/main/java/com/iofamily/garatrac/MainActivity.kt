@@ -18,17 +18,27 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.iofamily.garatrac.ui.settings.SettingsScreen
 import com.iofamily.garatrac.ui.settings.SettingsViewModel
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
-import com.iofamily.garatrac.data.LocationRepository
-import com.iofamily.garatrac.data.TrackPoint
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import com.iofamily.garatrac.ui.map.MapViewModel
+import com.iofamily.garatrac.ui.map.SyncStatus
 import com.iofamily.garatrac.ui.map.OsmMapView
 import com.iofamily.garatrac.ui.theme.GaraTracTheme
+
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import android.Manifest
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
@@ -39,16 +49,24 @@ class MainActivity : ComponentActivity() {
             GaraTracTheme {
                 val navController = rememberNavController()
                 val settingsViewModel: SettingsViewModel = viewModel()
+                val mapViewModel: MapViewModel = viewModel()
+
                 val settings by settingsViewModel.mapSettings.collectAsState()
+                val mapUiState by mapViewModel.uiState.collectAsState()
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
 
-                val locationRepository = remember { LocationRepository() }
-                var trackPoints by remember { mutableStateOf(emptyList<TrackPoint>()) }
+                val permissionLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestMultiplePermissions()
+                ) { }
 
-                LaunchedEffect(settings.serverUrl, settings.deviceId, settings.updateInterval) {
-                    while(true) {
-                        trackPoints = locationRepository.getTrack(settings.serverUrl, settings.deviceId)
-                        delay(settings.updateInterval)
-                    }
+                LaunchedEffect(Unit) {
+                    permissionLauncher.launch(
+                        arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        )
+                    )
                 }
 
                 Scaffold(
@@ -62,6 +80,24 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         )
+                    },
+                    floatingActionButton = {
+                        if (currentRoute == "map") {
+                            FloatingActionButton(
+                                onClick = { mapViewModel.syncData() },
+                                containerColor = when (mapUiState.syncStatus) {
+                                    SyncStatus.SYNCING -> Color.Green
+                                    SyncStatus.ERROR -> Color.Red
+                                    else -> MaterialTheme.colorScheme.primaryContainer
+                                }
+                            ) {
+                                when (mapUiState.syncStatus) {
+                                    SyncStatus.SYNCING -> Icon(Icons.Default.Sync, "Syncing")
+                                    SyncStatus.ERROR -> Icon(Icons.Default.CloudOff, "Error")
+                                    else -> Text("${mapUiState.countdown}")
+                                }
+                            }
+                        }
                     }
                 ) { innerPadding ->
                     NavHost(
@@ -72,7 +108,7 @@ class MainActivity : ComponentActivity() {
                         composable("map") {
                             OsmMapView(
                                 modifier = Modifier.fillMaxSize(),
-                                trackPoints = trackPoints,
+                                trackPoints = mapUiState.trackPoints,
                                 mapType = settings.mapType
                             )
                         }
@@ -85,4 +121,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
