@@ -28,7 +28,8 @@ class CarMapScreen(carContext: CarContext) : Screen(carContext) {
         lifecycleScope.launch {
             val settings = settingsRepository.mapSettings.first()
             while(true) {
-                trackPoints = locationRepository.getTrack(settings.serverUrl, settings.deviceId)
+                val result = locationRepository.getTrack(settings.serverUrl, settings.deviceId)
+                trackPoints = result.getOrDefault(emptyList())
                 invalidate()
                 delay(settings.updateInterval)
             }

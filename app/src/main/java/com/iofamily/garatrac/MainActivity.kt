@@ -21,17 +21,34 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.iofamily.garatrac.ui.settings.SettingsScreen
 import com.iofamily.garatrac.ui.settings.SettingsViewModel
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material.icons.filled.SyncDisabled
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.iofamily.garatrac.ui.map.MapViewModel
 import com.iofamily.garatrac.ui.map.SyncStatus
+import kotlinx.coroutines.launch
 import com.iofamily.garatrac.ui.map.OsmMapView
 import com.iofamily.garatrac.ui.theme.GaraTracTheme
 
@@ -40,7 +57,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import android.Manifest
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +73,9 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
+                val snackbarHostState = remember { SnackbarHostState() }
+                val scope = rememberCoroutineScope()
+
                 val permissionLauncher = rememberLauncherForActivityResult(
                     ActivityResultContracts.RequestMultiplePermissions()
                 ) { }
@@ -69,8 +89,17 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
+                LaunchedEffect(mapUiState.errorMessage) {
+                    mapUiState.errorMessage?.let {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(it)
+                        }
+                    }
+                }
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
+                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                     topBar = {
                         TopAppBar(
                             title = { Text("GaraTrac") },
@@ -83,18 +112,46 @@ class MainActivity : ComponentActivity() {
                     },
                     floatingActionButton = {
                         if (currentRoute == "map") {
-                            FloatingActionButton(
-                                onClick = { mapViewModel.syncData() },
-                                containerColor = when (mapUiState.syncStatus) {
+                            val containerColor by animateColorAsState(
+                                targetValue = when (mapUiState.syncStatus) {
                                     SyncStatus.SYNCING -> Color.Green
                                     SyncStatus.ERROR -> Color.Red
+                                    SyncStatus.DISABLED -> Color.Gray
                                     else -> MaterialTheme.colorScheme.primaryContainer
-                                }
+                                },
+                                label = "fabColor"
+                            )
+
+                            Surface(
+                                shape = FloatingActionButtonDefaults.shape,
+                                color = containerColor,
+                                shadowElevation = 6.dp,
+                                modifier = Modifier.combinedClickable(
+                                    onClick = { mapViewModel.syncData() },
+                                    onLongClick = { mapViewModel.toggleSync() }
+                                )
                             ) {
-                                when (mapUiState.syncStatus) {
-                                    SyncStatus.SYNCING -> Icon(Icons.Default.Sync, "Syncing")
-                                    SyncStatus.ERROR -> Icon(Icons.Default.CloudOff, "Error")
-                                    else -> Text("${mapUiState.countdown}")
+                                Box(
+                                    modifier = Modifier.defaultMinSize(
+                                        minWidth = 56.dp,
+                                        minHeight = 56.dp
+                                    ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    AnimatedContent(
+                                        targetState = mapUiState.syncStatus,
+                                        transitionSpec = {
+                                            fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+                                        },
+                                        label = "fabContent"
+                                    ) { status ->
+                                        when (status) {
+                                            SyncStatus.SYNCING -> Icon(Icons.Default.Sync, "Syncing")
+                                            SyncStatus.ERROR -> Icon(Icons.Default.CloudOff, "Error")
+                                            SyncStatus.DISABLED -> Icon(Icons.Default.SyncDisabled, "Disabled")
+                                            else -> Text("${mapUiState.countdown}")
+                                        }
+                                    }
                                 }
                             }
                         }
