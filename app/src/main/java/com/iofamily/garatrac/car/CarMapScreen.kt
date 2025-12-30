@@ -11,34 +11,63 @@ import androidx.car.app.model.PlaceListMapTemplate
 import androidx.car.app.model.PlaceMarker
 import androidx.car.app.model.Row
 import androidx.car.app.model.Template
-import com.iofamily.garatrac.data.PoiRepository
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
+import com.iofamily.garatrac.data.LocationRepository
+import com.iofamily.garatrac.data.SettingsRepository
+import com.iofamily.garatrac.data.TrackPoint
 
 class CarMapScreen(carContext: CarContext) : Screen(carContext) {
+    private var trackPoints: List<TrackPoint> = emptyList()
+    private val locationRepository = LocationRepository()
+    private val settingsRepository = SettingsRepository(carContext)
+
+    init {
+        lifecycleScope.launch {
+            val settings = settingsRepository.mapSettings.first()
+            while(true) {
+                trackPoints = locationRepository.getTrack(settings.serverUrl, settings.deviceId)
+                invalidate()
+                delay(settings.updateInterval)
+            }
+        }
+    }
+
     override fun onGetTemplate(): Template {
         val itemListBuilder = ItemList.Builder()
 
-        com.iofamily.garatrac.data.PoiRepository.getPois().forEach { poi ->
-            val place = Place.Builder(
-                CarLocation.create(poi.latitude, poi.longitude)
-            )
-            .setMarker(PlaceMarker.Builder().build())
-            .build()
-
-            itemListBuilder.addItem(
+        if (trackPoints.isEmpty()) {
+             itemListBuilder.addItem(
                 Row.Builder()
-                    .setTitle(poi.name)
-                    .addText(poi.description)
-                    .setMetadata(
-                        Metadata.Builder()
-                            .setPlace(place)
-                            .build()
-                    )
+                    .setTitle("Loading or No Data")
                     .build()
             )
+        } else {
+            trackPoints.forEach { point ->
+                val place = Place.Builder(
+                    CarLocation.create(point.latitude, point.longitude)
+                )
+                .setMarker(PlaceMarker.Builder().build())
+                .build()
+
+                itemListBuilder.addItem(
+                    Row.Builder()
+                        .setTitle("Location")
+                        .addText(point.timestamp)
+                        .setMetadata(
+                            Metadata.Builder()
+                                .setPlace(place)
+                                .build()
+                        )
+                        .build()
+                )
+            }
         }
 
         return PlaceListMapTemplate.Builder()
-            .setTitle("GaraTrac POIs")
+            .setTitle("GaraTrac Track")
             .setHeaderAction(Action.APP_ICON)
             .setItemList(itemListBuilder.build())
             .build()

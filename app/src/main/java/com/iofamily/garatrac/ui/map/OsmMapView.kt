@@ -15,12 +15,13 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
-import com.iofamily.garatrac.data.Poi
+import org.osmdroid.views.overlay.Polyline
+import com.iofamily.garatrac.data.TrackPoint
 
 @Composable
 fun OsmMapView(
     modifier: Modifier = Modifier,
-    pois: List<Poi> = emptyList(),
+    trackPoints: List<TrackPoint> = emptyList(),
     mapType: String = "MAPNIK",
     onMapReady: (MapView) -> Unit = {}
 ) {
@@ -81,14 +82,23 @@ fun OsmMapView(
             }
 
             view.overlays.clear()
-            pois.forEach { poi ->
+
+            if (trackPoints.isNotEmpty()) {
+                val line = Polyline()
+                line.setPoints(trackPoints.map { GeoPoint(it.latitude, it.longitude) })
+                view.overlays.add(line)
+
+                val latest = trackPoints.last()
                 val marker = Marker(view)
-                marker.position = GeoPoint(poi.latitude, poi.longitude)
-                marker.title = poi.name
-                marker.snippet = poi.description
+                marker.position = GeoPoint(latest.latitude, latest.longitude)
+                marker.title = "Latest Location"
+                marker.snippet = latest.timestamp
                 marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 view.overlays.add(marker)
+
+                view.controller.animateTo(GeoPoint(latest.latitude, latest.longitude))
             }
+
             view.invalidate()
             onMapReady(view)
         }

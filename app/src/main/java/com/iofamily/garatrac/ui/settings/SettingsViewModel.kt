@@ -23,5 +23,22 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             repository.setMapType(mapType)
         }
     }
-}
 
+    fun setServerUrl(url: String) {
+        viewModelScope.launch {
+            repository.setServerUrl(url)
+        }
+    }
+
+    fun setDeviceId(id: String) {
+        viewModelScope.launch {
+            repository.setDeviceId(id)
+        }
+    }
+
+    fun setUpdateInterval(interval: Long) {
+        viewModelScope.launch {
+            repository.setUpdateInterval(interval)
+        }
+    }
+}

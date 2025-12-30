@@ -20,7 +20,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.iofamily.garatrac.ui.settings.SettingsScreen
 import com.iofamily.garatrac.ui.settings.SettingsViewModel
-import com.iofamily.garatrac.data.PoiRepository
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
+import com.iofamily.garatrac.data.LocationRepository
+import com.iofamily.garatrac.data.TrackPoint
 import com.iofamily.garatrac.ui.map.OsmMapView
 import com.iofamily.garatrac.ui.theme.GaraTracTheme
 
@@ -34,6 +40,16 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val settingsViewModel: SettingsViewModel = viewModel()
                 val settings by settingsViewModel.mapSettings.collectAsState()
+
+                val locationRepository = remember { LocationRepository() }
+                var trackPoints by remember { mutableStateOf(emptyList<TrackPoint>()) }
+
+                LaunchedEffect(settings.serverUrl, settings.deviceId, settings.updateInterval) {
+                    while(true) {
+                        trackPoints = locationRepository.getTrack(settings.serverUrl, settings.deviceId)
+                        delay(settings.updateInterval)
+                    }
+                }
 
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
@@ -56,7 +72,7 @@ class MainActivity : ComponentActivity() {
                         composable("map") {
                             OsmMapView(
                                 modifier = Modifier.fillMaxSize(),
-                                pois = PoiRepository.getPois(),
+                                trackPoints = trackPoints,
                                 mapType = settings.mapType
                             )
                         }

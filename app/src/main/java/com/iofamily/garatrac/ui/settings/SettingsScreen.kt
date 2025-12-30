@@ -17,6 +17,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import kotlin.math.roundToInt
+
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel()
@@ -24,7 +33,12 @@ fun SettingsScreen(
     val settings by viewModel.mapSettings.collectAsState()
 
     Scaffold { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding).padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
             Text("Map Type", style = MaterialTheme.typography.titleLarge)
 
             val mapTypes = listOf("MAPNIK", "USGS_TOPO", "USGS_SAT")
@@ -50,6 +64,37 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Server Configuration", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = settings.serverUrl,
+                onValueChange = { viewModel.setServerUrl(it) },
+                label = { Text("Server URL") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = settings.deviceId,
+                onValueChange = { viewModel.setDeviceId(it) },
+                label = { Text("Device ID") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Update Interval: ${settings.updateInterval / 1000} seconds", style = MaterialTheme.typography.titleMedium)
+
+            Slider(
+                value = settings.updateInterval.toFloat(),
+                onValueChange = { viewModel.setUpdateInterval(it.toLong()) },
+                valueRange = 10000f..300000f, // 10s to 5m
+                steps = 28, // (300-10)/10 - 1 approx
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
