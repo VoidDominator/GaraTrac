@@ -23,8 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import kotlin.math.roundToInt
+
 
 @Composable
 fun SettingsScreen(
@@ -95,6 +94,33 @@ fun SettingsScreen(
                 steps = 28, // (300-10)/10 - 1 approx
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Tablet Panel Position", style = MaterialTheme.typography.titleLarge)
+
+            val positions = listOf("Left", "Right")
+            positions.forEach { position ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .selectable(
+                            selected = (position == settings.tabletPanelPosition),
+                            onClick = { viewModel.setTabletPanelPosition(position) }
+                        )
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = (position == settings.tabletPanelPosition),
+                        onClick = { viewModel.setTabletPanelPosition(position) }
+                    )
+                    Text(
+                        text = position,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            }
         }
     }
 }

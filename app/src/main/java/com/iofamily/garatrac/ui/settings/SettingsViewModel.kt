@@ -41,4 +41,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             repository.setUpdateInterval(interval)
         }
     }
+
+    fun setTabletPanelPosition(position: String) {
+        viewModelScope.launch {
+            repository.setTabletPanelPosition(position)
+        }
+    }
 }
