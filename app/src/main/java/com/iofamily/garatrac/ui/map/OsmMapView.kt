@@ -52,8 +52,8 @@ fun OsmMapView(
         MapView(context).apply {
             setTileSource(TileSourceFactory.MAPNIK)
             setMultiTouchControls(true)
-            controller.setZoom(15.0)
-            controller.setCenter(GeoPoint(48.8583, 2.2944)) // Default to Eiffel Tower
+            controller.setZoom(16.0)
+            controller.setCenter(GeoPoint(43.09848812701165, -79.0712233140023)) // I wonder where this is
         }
     }
 
