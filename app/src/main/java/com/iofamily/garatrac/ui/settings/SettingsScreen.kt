@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -31,97 +30,96 @@ fun SettingsScreen(
 ) {
     val settings by viewModel.mapSettings.collectAsState()
 
-    Scaffold { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            Text("Map Type", style = MaterialTheme.typography.titleLarge)
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text("Settings", style = MaterialTheme.typography.headlineLarge)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Map Type", style = MaterialTheme.typography.titleLarge)
 
-            val mapTypes = listOf("MAPNIK", "USGS_TOPO", "USGS_SAT")
-            mapTypes.forEach { type ->
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .selectable(
-                            selected = (type == settings.mapType),
-                            onClick = { viewModel.setMapType(type) }
-                        )
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
+        val mapTypes = listOf("MAPNIK", "USGS_TOPO", "USGS_SAT")
+        mapTypes.forEach { type ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .selectable(
                         selected = (type == settings.mapType),
                         onClick = { viewModel.setMapType(type) }
                     )
-                    Text(
-                        text = type,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = (type == settings.mapType),
+                    onClick = { viewModel.setMapType(type) }
+                )
+                Text(
+                    text = type,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Server Configuration", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Server Configuration", style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = settings.serverUrl,
-                onValueChange = { viewModel.setServerUrl(it) },
-                label = { Text("Server URL") },
-                modifier = Modifier.fillMaxWidth()
-            )
+        OutlinedTextField(
+            value = settings.serverUrl,
+            onValueChange = { viewModel.setServerUrl(it) },
+            label = { Text("Server URL") },
+            modifier = Modifier.fillMaxWidth()
+        )
 
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = settings.deviceId,
-                onValueChange = { viewModel.setDeviceId(it) },
-                label = { Text("Device ID") },
-                modifier = Modifier.fillMaxWidth()
-            )
+        OutlinedTextField(
+            value = settings.deviceId,
+            onValueChange = { viewModel.setDeviceId(it) },
+            label = { Text("Device ID") },
+            modifier = Modifier.fillMaxWidth()
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Update Interval: ${settings.updateInterval / 1000} seconds", style = MaterialTheme.typography.titleMedium)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Update Interval: ${settings.updateInterval / 1000} seconds", style = MaterialTheme.typography.titleMedium)
 
-            Slider(
-                value = settings.updateInterval.toFloat(),
-                onValueChange = { viewModel.setUpdateInterval(it.toLong()) },
-                valueRange = 10000f..300000f, // 10s to 5m
-                steps = 28, // (300-10)/10 - 1 approx
-                modifier = Modifier.fillMaxWidth()
-            )
+        Slider(
+            value = settings.updateInterval.toFloat(),
+            onValueChange = { viewModel.setUpdateInterval(it.toLong()) },
+            valueRange = 10000f..300000f, // 10s to 5m
+            steps = 28, // (300-10)/10 - 1 approx
+            modifier = Modifier.fillMaxWidth()
+        )
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Tablet Panel Position", style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Settings Panel Position (Horizontal)", style = MaterialTheme.typography.titleLarge)
 
-            val positions = listOf("Left", "Right")
-            positions.forEach { position ->
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .selectable(
-                            selected = (position == settings.tabletPanelPosition),
-                            onClick = { viewModel.setTabletPanelPosition(position) }
-                        )
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
+        val positions = listOf("Left", "Right")
+        positions.forEach { position ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .selectable(
                         selected = (position == settings.tabletPanelPosition),
                         onClick = { viewModel.setTabletPanelPosition(position) }
                     )
-                    Text(
-                        text = position,
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = (position == settings.tabletPanelPosition),
+                    onClick = { viewModel.setTabletPanelPosition(position) }
+                )
+                Text(
+                    text = position,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
             }
         }
     }
 }
-

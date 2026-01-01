@@ -25,8 +25,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -54,26 +54,29 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.dp
-import com.iofamily.garatrac.ui.map.MapViewModel
-import com.iofamily.garatrac.ui.map.SyncStatus
-import kotlinx.coroutines.launch
-import com.iofamily.garatrac.ui.map.OsmMapView
-import com.iofamily.garatrac.ui.theme.GaraTracTheme
-import com.iofamily.garatrac.ui.theme.ExtendedTheme
-
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.LaunchedEffect
 import android.Manifest
 import android.content.res.Configuration
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.iofamily.garatrac.ui.theme.GaraTracTheme
+import com.iofamily.garatrac.ui.theme.ExtendedTheme
+import com.iofamily.garatrac.ui.map.MapViewModel
+import com.iofamily.garatrac.ui.map.SyncStatus
+import com.iofamily.garatrac.ui.map.OsmMapView
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.material3.Surface
+import androidx.compose.material3.rememberModalBottomSheetState
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 class MainActivity : ComponentActivity() {
@@ -120,62 +123,65 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
                     floatingActionButton = {
-                        val containerColor by animateColorAsState(
-                            targetValue = when (mapUiState.syncStatus) {
-                                SyncStatus.SYNCING -> ExtendedTheme.colorScheme.success.colorContainer
-                                SyncStatus.ERROR -> MaterialTheme.colorScheme.errorContainer
-                                SyncStatus.DISABLED -> MaterialTheme.colorScheme.surfaceVariant
-                                else -> MaterialTheme.colorScheme.primaryContainer
-                            },
-                            label = "fabColor"
-                        )
-
-                        val contentColor by animateColorAsState(
-                            targetValue = when (mapUiState.syncStatus) {
-                                SyncStatus.SYNCING -> ExtendedTheme.colorScheme.success.onColorContainer
-                                SyncStatus.ERROR -> MaterialTheme.colorScheme.onErrorContainer
-                                SyncStatus.DISABLED -> MaterialTheme.colorScheme.onSurfaceVariant
-                                else -> MaterialTheme.colorScheme.onPrimaryContainer
-                            },
-                            label = "fabContentColor"
-                        )
-
-                        Surface(
-                            shape = FloatingActionButtonDefaults.shape,
-                            color = containerColor,
-                            contentColor = contentColor,
-                            shadowElevation = 6.dp,
-                            modifier = Modifier.combinedClickable(
-                                onClick = { mapViewModel.syncData() },
-                                onLongClick = { mapViewModel.toggleSync() }
+                        if (!isLandscape || !showSettings) {
+                            val containerColor by animateColorAsState(
+                                targetValue = when (mapUiState.syncStatus) {
+                                    SyncStatus.SYNCING -> ExtendedTheme.colorScheme.success.colorContainer
+                                    SyncStatus.ERROR -> MaterialTheme.colorScheme.errorContainer
+                                    SyncStatus.DISABLED -> MaterialTheme.colorScheme.surfaceVariant
+                                    else -> MaterialTheme.colorScheme.primaryContainer
+                                },
+                                label = "fabColor"
                             )
-                        ) {
-                            Box(
-                                modifier = Modifier.defaultMinSize(
-                                    minWidth = 56.dp,
-                                    minHeight = 56.dp
-                                ),
-                                contentAlignment = Alignment.Center
+
+                            val contentColor by animateColorAsState(
+                                targetValue = when (mapUiState.syncStatus) {
+                                    SyncStatus.SYNCING -> ExtendedTheme.colorScheme.success.onColorContainer
+                                    SyncStatus.ERROR -> MaterialTheme.colorScheme.onErrorContainer
+                                    SyncStatus.DISABLED -> MaterialTheme.colorScheme.onSurfaceVariant
+                                    else -> MaterialTheme.colorScheme.onPrimaryContainer
+                                },
+                                label = "fabContentColor"
+                            )
+
+                            Surface(
+                                shape = FloatingActionButtonDefaults.shape,
+                                color = containerColor,
+                                contentColor = contentColor,
+                                shadowElevation = 6.dp,
+                                modifier = Modifier.combinedClickable(
+                                    onClick = { mapViewModel.syncData() },
+                                    onLongClick = { mapViewModel.toggleSync() }
+                                )
                             ) {
-                                AnimatedContent(
-                                    targetState = mapUiState.syncStatus,
-                                    transitionSpec = {
-                                        fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
-                                    },
-                                    label = "fabContent"
-                                ) { status ->
-                                    when (status) {
-                                        SyncStatus.SYNCING -> Icon(Icons.Default.Sync, "Syncing")
-                                        SyncStatus.ERROR -> Icon(Icons.Default.CloudOff, "Error")
-                                        SyncStatus.DISABLED -> Icon(Icons.Default.SyncDisabled, "Disabled")
-                                        else -> Text("${mapUiState.countdown}")
+                                Box(
+                                    modifier = Modifier.defaultMinSize(
+                                        minWidth = 56.dp,
+                                        minHeight = 56.dp
+                                    ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    AnimatedContent(
+                                        targetState = mapUiState.syncStatus,
+                                        transitionSpec = {
+                                            fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+                                        },
+                                        label = "fabContent"
+                                    ) { status ->
+                                        when (status) {
+                                            SyncStatus.SYNCING -> Icon(Icons.Default.Sync, "Syncing")
+                                            SyncStatus.ERROR -> Icon(Icons.Default.CloudOff, "Error")
+                                            SyncStatus.DISABLED -> Icon(Icons.Default.SyncDisabled, "Disabled")
+                                            else -> Text("${mapUiState.countdown}")
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                 ) { innerPadding ->
-                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+//                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                    Box(modifier = Modifier.fillMaxSize()) {
                         OsmMapView(
                             modifier = Modifier.fillMaxSize(),
                             trackPoints = mapUiState.trackPoints,
@@ -187,8 +193,8 @@ class MainActivity : ComponentActivity() {
                             onSettingsClick = { showSettings = true },
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
-                                .statusBarsPadding()
-                                .padding(top = 16.dp)
+//                                .statusBarsPadding()
+                                .padding(innerPadding)
                         )
 
                         if (isLandscape) {
@@ -202,22 +208,41 @@ class MainActivity : ComponentActivity() {
                             }
 
                             val isRightPanel = settings.tabletPanelPosition == "Right"
-                            AnimatedVisibility(
-                                visible = showSettings,
-                                enter = slideInHorizontally(initialOffsetX = { if (isRightPanel) it else -it }),
-                                exit = slideOutHorizontally(targetOffsetX = { if (isRightPanel) it else -it }),
+                            val alignment = if (isRightPanel) Alignment.CenterEnd else Alignment.CenterStart
+
+                            if (showSettings) {
+                                BackHandler { showSettings = false }
+                            }
+
+                            Box(
                                 modifier = Modifier
-                                    .align(if (isRightPanel) Alignment.CenterEnd else Alignment.CenterStart)
+                                    .align(alignment)
                                     .width(400.dp)
                                     .fillMaxHeight()
-                                    .padding(16.dp)
+                                    .padding(top = 16.dp)
                             ) {
-                                Surface(
-                                    shadowElevation = 8.dp,
-                                    shape = MaterialTheme.shapes.large,
-                                    color = MaterialTheme.colorScheme.surface
+                                AnimatedVisibility(
+                                    visible = showSettings,
+                                    enter = slideInVertically(initialOffsetY = { it }),
+                                    exit = slideOutVertically(targetOffsetY = { it }),
+                                    modifier = Modifier.align(Alignment.BottomCenter)
                                 ) {
-                                    SettingsScreen(viewModel = settingsViewModel)
+                                    Surface(
+                                        modifier = Modifier.fillMaxSize(),
+                                        shape = MaterialTheme.shapes.large.copy(
+                                            bottomStart = CornerSize(0.dp),
+                                            bottomEnd = CornerSize(0.dp)
+                                        ),
+                                        color = MaterialTheme.colorScheme.surface,
+                                        tonalElevation = 6.dp
+                                    ) {
+                                        Column(modifier = Modifier.fillMaxSize()) {
+                                            BottomSheetDefaults.DragHandle(
+                                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                                            )
+                                            SettingsScreen(viewModel = settingsViewModel)
+                                        }
+                                    }
                                 }
                             }
                         } else {
