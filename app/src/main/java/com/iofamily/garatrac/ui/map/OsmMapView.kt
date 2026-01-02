@@ -29,10 +29,10 @@ fun OsmMapView(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val tileSource = remember(mapType) {
-        when (mapType) {
-            "USGS_TOPO" -> TileSourceFactory.USGS_TOPO
-            "USGS_SAT" -> TileSourceFactory.USGS_SAT
-            else -> TileSourceFactory.MAPNIK
+        try {
+            TileSourceFactory.getTileSource(mapType)
+        } catch (e: Exception) {
+            TileSourceFactory.MAPNIK
         }
     }
 

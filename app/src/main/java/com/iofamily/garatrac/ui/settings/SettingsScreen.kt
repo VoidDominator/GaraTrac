@@ -20,13 +20,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 
 
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = viewModel()
+    viewModel: SettingsViewModel = viewModel(),
+    onAboutClick: () -> Unit
 ) {
     val settings by viewModel.mapSettings.collectAsState()
 
@@ -40,27 +42,33 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(16.dp))
         Text("Map Type", style = MaterialTheme.typography.titleLarge)
 
-        val mapTypes = listOf("MAPNIK", "USGS_TOPO", "USGS_SAT")
-        mapTypes.forEach { type ->
+        val availableSources = viewModel.availableTileSources
+        availableSources.forEach { source ->
             Row(
                 Modifier
                     .fillMaxWidth()
                     .selectable(
-                        selected = (type == settings.mapType),
-                        onClick = { viewModel.setMapType(type) }
+                        selected = (source.name() == settings.mapType),
+                        onClick = { viewModel.setMapType(source.name()) }
                     )
                     .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 RadioButton(
-                    selected = (type == settings.mapType),
-                    onClick = { viewModel.setMapType(type) }
+                    selected = (source.name() == settings.mapType),
+                    onClick = { viewModel.setMapType(source.name()) }
                 )
-                Text(
-                    text = type,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
+                Column(modifier = Modifier.padding(start = 8.dp)) {
+                    Text(
+                        text = source.name(),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = source.name(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
 
@@ -121,5 +129,16 @@ fun SettingsScreen(
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = onAboutClick,
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Text("About App")
+        }
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }

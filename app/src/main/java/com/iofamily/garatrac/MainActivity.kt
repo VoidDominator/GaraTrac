@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.iofamily.garatrac.ui.settings.SettingsScreen
 import com.iofamily.garatrac.ui.settings.SettingsViewModel
+import com.iofamily.garatrac.ui.settings.AboutScreen
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -92,6 +93,7 @@ class MainActivity : ComponentActivity() {
                 val mapUiState by mapViewModel.uiState.collectAsState()
 
                 var showSettings by remember { mutableStateOf(false) }
+                var showAbout by remember { mutableStateOf(false) }
                 val configuration = LocalConfiguration.current
                 val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -109,6 +111,12 @@ class MainActivity : ComponentActivity() {
                             Manifest.permission.ACCESS_COARSE_LOCATION
                         )
                     )
+                }
+
+                LaunchedEffect(showSettings) {
+                    if (!showSettings) {
+                        showAbout = false
+                    }
                 }
 
                 LaunchedEffect(mapUiState.errorMessage) {
@@ -211,7 +219,13 @@ class MainActivity : ComponentActivity() {
                             val alignment = if (isRightPanel) Alignment.CenterEnd else Alignment.CenterStart
 
                             if (showSettings) {
-                                BackHandler { showSettings = false }
+                                BackHandler {
+                                    if (showAbout) {
+                                        showAbout = false
+                                    } else {
+                                        showSettings = false
+                                    }
+                                }
                             }
 
                             Box(
@@ -240,7 +254,16 @@ class MainActivity : ComponentActivity() {
                                             BottomSheetDefaults.DragHandle(
                                                 modifier = Modifier.align(Alignment.CenterHorizontally)
                                             )
-                                            SettingsScreen(viewModel = settingsViewModel)
+                                            AnimatedContent(targetState = showAbout, label = "SettingsContent") { isAbout ->
+                                                if (isAbout) {
+                                                    AboutScreen(onBackClick = { showAbout = false })
+                                                } else {
+                                                    SettingsScreen(
+                                                        viewModel = settingsViewModel,
+                                                        onAboutClick = { showAbout = true }
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -251,7 +274,16 @@ class MainActivity : ComponentActivity() {
                                     onDismissRequest = { showSettings = false },
                                     sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
                                 ) {
-                                    SettingsScreen(viewModel = settingsViewModel)
+                                    AnimatedContent(targetState = showAbout, label = "SettingsContent") { isAbout ->
+                                        if (isAbout) {
+                                            AboutScreen(onBackClick = { showAbout = false })
+                                        } else {
+                                            SettingsScreen(
+                                                viewModel = settingsViewModel,
+                                                onAboutClick = { showAbout = true }
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }

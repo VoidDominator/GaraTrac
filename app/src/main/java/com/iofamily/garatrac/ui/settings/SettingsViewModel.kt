@@ -8,6 +8,8 @@ import com.iofamily.garatrac.data.SettingsRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.osmdroid.tileprovider.tilesource.ITileSource
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = SettingsRepository(application)
@@ -17,6 +19,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         SharingStarted.WhileSubscribed(5000),
         MapSettings()
     )
+
+    val availableTileSources: List<ITileSource> = TileSourceFactory.getTileSources()
 
     fun setMapType(mapType: String) {
         viewModelScope.launch {
