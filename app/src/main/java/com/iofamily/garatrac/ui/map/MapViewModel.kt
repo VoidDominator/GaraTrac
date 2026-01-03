@@ -67,8 +67,8 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 val settings = settingsRepository.mapSettings.first()
 
                 if (success) {
-                    _uiState.value = _uiState.value.copy(syncStatus = SyncStatus.IDLE)
                     val intervalSeconds = (settings.updateInterval / 1000).toInt()
+                    _uiState.value = _uiState.value.copy(syncStatus = SyncStatus.IDLE, countdown = -1)
                     for (i in -1 downTo -intervalSeconds) {
                         if (!_uiState.value.isSyncEnabled) break
                         _uiState.value = _uiState.value.copy(countdown = i)

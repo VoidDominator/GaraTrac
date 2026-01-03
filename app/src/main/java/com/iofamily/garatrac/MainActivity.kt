@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.SyncDisabled
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -177,6 +178,7 @@ class MainActivity : ComponentActivity() {
                                     ) { status ->
                                         when (status) {
                                             SyncStatus.SYNCING -> Icon(Icons.Default.Sync, "Syncing")
+                                            SyncStatus.SUCCESS -> Icon(Icons.Default.Check, "Success")
                                             SyncStatus.ERROR -> {
                                                 if (mapUiState.countdown > 0) {
                                                     Text("${mapUiState.countdown}")

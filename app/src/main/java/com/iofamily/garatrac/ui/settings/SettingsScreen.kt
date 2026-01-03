@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 
 
 @Composable
@@ -111,7 +112,14 @@ fun SettingsScreen(
             onValueChange = { viewModel.setRetryInterval(it.toLong()) },
             valueRange = 5000f..60000f, // 5s to 1m
             steps = 10,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.error,
+                activeTrackColor = MaterialTheme.colorScheme.error,
+                inactiveTrackColor = MaterialTheme.colorScheme.errorContainer,
+                activeTickColor = MaterialTheme.colorScheme.onError,
+                inactiveTickColor = MaterialTheme.colorScheme.error
+            )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
