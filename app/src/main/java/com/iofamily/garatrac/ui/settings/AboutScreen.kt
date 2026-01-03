@@ -61,7 +61,7 @@ fun AboutScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            "A simple native android app using Jetpack Compose with Material 3 that displays a map from OpenStreetMap, tracks location, and syncs with a server.",
+            "A simple native android app using Jetpack Compose with Material 3 design that displays a map from OpenStreetMap, tracks location, and syncs with a server.",
             style = MaterialTheme.typography.bodyLarge
         )
     }

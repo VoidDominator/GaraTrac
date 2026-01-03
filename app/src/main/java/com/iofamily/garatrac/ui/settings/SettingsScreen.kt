@@ -42,6 +42,11 @@ fun SettingsScreen(
         Text("Settings", style = MaterialTheme.typography.headlineLarge)
         Spacer(modifier = Modifier.height(16.dp))
         Text("Map Type", style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = "Some of them does not work :(",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
         val availableSources = viewModel.availableTileSources
         availableSources.forEach { source ->
@@ -52,7 +57,8 @@ fun SettingsScreen(
                         selected = (source.name() == settings.mapType),
                         onClick = { viewModel.setMapType(source.name()) }
                     )
-                    .padding(vertical = 4.dp),
+//                    .padding(vertical = 4.dp),
+                    ,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 RadioButton(
@@ -123,7 +129,12 @@ fun SettingsScreen(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Settings Panel Position (Horizontal)", style = MaterialTheme.typography.titleLarge)
+        Text("Settings Panel Position", style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = "For tablets or devices in landscape",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
         val positions = listOf("Left", "Right")
         positions.forEach { position ->
@@ -134,7 +145,8 @@ fun SettingsScreen(
                         selected = (position == settings.tabletPanelPosition),
                         onClick = { viewModel.setTabletPanelPosition(position) }
                     )
-                    .padding(vertical = 4.dp),
+//                    .padding(vertical = 4.dp)
+                    ,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 RadioButton(
