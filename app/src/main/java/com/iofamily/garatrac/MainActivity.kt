@@ -41,7 +41,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudOff
@@ -178,7 +177,13 @@ class MainActivity : ComponentActivity() {
                                     ) { status ->
                                         when (status) {
                                             SyncStatus.SYNCING -> Icon(Icons.Default.Sync, "Syncing")
-                                            SyncStatus.ERROR -> Icon(Icons.Default.CloudOff, "Error")
+                                            SyncStatus.ERROR -> {
+                                                if (mapUiState.countdown > 0) {
+                                                    Text("${mapUiState.countdown}")
+                                                } else {
+                                                    Icon(Icons.Default.CloudOff, "Error")
+                                                }
+                                            }
                                             SyncStatus.DISABLED -> Icon(Icons.Default.SyncDisabled, "Disabled")
                                             else -> Text("${mapUiState.countdown}")
                                         }

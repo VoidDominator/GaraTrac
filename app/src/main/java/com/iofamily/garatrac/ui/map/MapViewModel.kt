@@ -9,12 +9,12 @@ import com.iofamily.garatrac.data.LocationUpdate
 import com.iofamily.garatrac.data.SettingsRepository
 import com.iofamily.garatrac.data.TrackPoint
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 enum class SyncStatus {
@@ -46,25 +46,42 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
     private fun startAutoSync() {
         autoSyncJob?.cancel()
         autoSyncJob = viewModelScope.launch {
-            while (true) {
+            if (!_uiState.value.isSyncEnabled) {
+                _uiState.value = _uiState.value.copy(syncStatus = SyncStatus.DISABLED)
+                return@launch
+            }
+
+            while (isActive) {
                 if (!_uiState.value.isSyncEnabled) {
                     _uiState.value = _uiState.value.copy(syncStatus = SyncStatus.DISABLED)
-                    delay(1000)
-                    continue
+                    break
                 }
+
+                val success = syncDataInternal()
+
+                // Wait to show result
+                delay(2000)
+
+                if (!_uiState.value.isSyncEnabled) break
 
                 val settings = settingsRepository.mapSettings.first()
-                val intervalSeconds = (settings.updateInterval / 1000).toInt()
 
-                // Countdown
-                for (i in -1 downTo -intervalSeconds) {
-                    if (!_uiState.value.isSyncEnabled) break // Exit countdown if disabled
-                    _uiState.value = _uiState.value.copy(countdown = i)
-                    delay(1000)
-                }
-
-                if (_uiState.value.isSyncEnabled) {
-                    syncDataInternal()
+                if (success) {
+                    _uiState.value = _uiState.value.copy(syncStatus = SyncStatus.IDLE)
+                    val intervalSeconds = (settings.updateInterval / 1000).toInt()
+                    for (i in -1 downTo -intervalSeconds) {
+                        if (!_uiState.value.isSyncEnabled) break
+                        _uiState.value = _uiState.value.copy(countdown = i)
+                        delay(1000)
+                    }
+                } else {
+                    // Keep ERROR status (Red)
+                    val retrySeconds = (settings.retryInterval / 1000).toInt()
+                    for (i in retrySeconds downTo 1) {
+                        if (!_uiState.value.isSyncEnabled) break
+                        _uiState.value = _uiState.value.copy(countdown = i)
+                        delay(1000)
+                    }
                 }
             }
         }
@@ -76,30 +93,21 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             isSyncEnabled = newEnabledState,
             syncStatus = if (newEnabledState) SyncStatus.IDLE else SyncStatus.DISABLED
         )
-        // Restart the loop to react immediately
-        startAutoSync()
-    }
-
-    fun syncData() {
-        // Manual sync resets the timer
-        startAutoSync()
-        // Trigger immediate sync logic (startAutoSync will eventually call it, but we want it now)
-        // Actually, restarting startAutoSync will start the countdown first.
-        // We want to sync NOW and THEN restart the countdown.
-
-        viewModelScope.launch {
-            // Cancel existing job to stop countdown
-            autoSyncJob?.cancelAndJoin()
-
-            // Perform sync
-            syncDataInternal()
-
-            // Restart auto sync loop
+        if (newEnabledState) {
             startAutoSync()
+        } else {
+            autoSyncJob?.cancel()
         }
     }
 
-    private suspend fun syncDataInternal() {
+    fun syncData() {
+        if (!_uiState.value.isSyncEnabled) {
+            _uiState.value = _uiState.value.copy(isSyncEnabled = true)
+        }
+        startAutoSync()
+    }
+
+    private suspend fun syncDataInternal(): Boolean {
         _uiState.value = _uiState.value.copy(syncStatus = SyncStatus.SYNCING, errorMessage = null)
         val settings = settingsRepository.mapSettings.first()
 
@@ -115,15 +123,15 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
                 longitude = location.longitude
             )
             uploadResult = locationRepository.postLocation(settings.serverUrl, update)
-        } else {
-             // Could consider this an error or just skip upload
         }
 
         // 3. Get Track
         val trackResult = locationRepository.getTrack(settings.serverUrl, settings.deviceId)
 
-        if (uploadResult.isSuccess && trackResult.isSuccess) {
-             _uiState.value = _uiState.value.copy(
+        val success = uploadResult.isSuccess && trackResult.isSuccess
+
+        if (success) {
+            _uiState.value = _uiState.value.copy(
                 trackPoints = trackResult.getOrDefault(emptyList()),
                 syncStatus = SyncStatus.SUCCESS
             )
@@ -135,11 +143,7 @@ class MapViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
 
-        // Reset status after a short delay if success/error to show the result
-        delay(2000)
-        if (_uiState.value.syncStatus != SyncStatus.SYNCING && _uiState.value.syncStatus != SyncStatus.DISABLED) {
-             _uiState.value = _uiState.value.copy(syncStatus = SyncStatus.IDLE)
-        }
+        return success
     }
 }
 

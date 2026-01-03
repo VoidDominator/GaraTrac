@@ -18,6 +18,7 @@ data class MapSettings(
     val serverUrl: String = "https://homelab.perifural.com",
     val deviceId: String = "dev1",
     val updateInterval: Long = 60000L, // 1 minute in milliseconds
+    val retryInterval: Long = 10000L, // 10 seconds in milliseconds
     val tabletPanelPosition: String = "Right" // "Left" or "Right"
 )
 
@@ -26,6 +27,7 @@ class SettingsRepository(private val context: Context) {
     private val SERVER_URL_KEY = stringPreferencesKey("server_url")
     private val DEVICE_ID_KEY = stringPreferencesKey("device_id")
     private val UPDATE_INTERVAL_KEY = longPreferencesKey("update_interval")
+    private val RETRY_INTERVAL_KEY = longPreferencesKey("retry_interval")
     private val TABLET_PANEL_POSITION_KEY = stringPreferencesKey("tablet_panel_position")
 
     val mapSettings: Flow<MapSettings> = context.dataStore.data
@@ -35,6 +37,7 @@ class SettingsRepository(private val context: Context) {
                 serverUrl = preferences[SERVER_URL_KEY] ?: "https://homelab.perifural.com",
                 deviceId = preferences[DEVICE_ID_KEY] ?: "dev1",
                 updateInterval = preferences[UPDATE_INTERVAL_KEY] ?: 60000L,
+                retryInterval = preferences[RETRY_INTERVAL_KEY] ?: 10000L,
                 tabletPanelPosition = preferences[TABLET_PANEL_POSITION_KEY] ?: "Right"
             )
         }
@@ -60,6 +63,12 @@ class SettingsRepository(private val context: Context) {
     suspend fun setUpdateInterval(interval: Long) {
         context.dataStore.edit { preferences ->
             preferences[UPDATE_INTERVAL_KEY] = interval
+        }
+    }
+
+    suspend fun setRetryInterval(interval: Long) {
+        context.dataStore.edit { preferences ->
+            preferences[RETRY_INTERVAL_KEY] = interval
         }
     }
 

@@ -104,6 +104,17 @@ fun SettingsScreen(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+        Text("Retry Interval: ${settings.retryInterval / 1000} seconds", style = MaterialTheme.typography.titleMedium)
+
+        Slider(
+            value = settings.retryInterval.toFloat(),
+            onValueChange = { viewModel.setRetryInterval(it.toLong()) },
+            valueRange = 5000f..60000f, // 5s to 1m
+            steps = 10,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
         Text("Settings Panel Position (Horizontal)", style = MaterialTheme.typography.titleLarge)
 
         val positions = listOf("Left", "Right")

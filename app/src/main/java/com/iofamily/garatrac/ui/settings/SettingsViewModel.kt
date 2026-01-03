@@ -46,6 +46,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun setRetryInterval(interval: Long) {
+        viewModelScope.launch {
+            repository.setRetryInterval(interval)
+        }
+    }
+
     fun setTabletPanelPosition(position: String) {
         viewModelScope.launch {
             repository.setTabletPanelPosition(position)
